@@ -80,6 +80,8 @@ function CreatorVetting() {
   const [sponsoredViews, setSponsoredViews] = useState("36000, 41000, 38000");
   const [relevance, setRelevance] = useState(70);
   const [handle, setHandle] = useState("");
+  const [hasMediaKit, setHasMediaKit] = useState(false);
+  const [nicheNotes, setNicheNotes] = useState("");
 
   const result = useMemo(() => {
     const f = parseFloat(followers) || 0;
@@ -207,25 +209,74 @@ function CreatorVetting() {
             onChange={(e) => setSponsoredViews(e.target.value)}
           />
         </Field>
-        <Field
-          label={`Audience relevance (skincare/beauty) — ${relevance}%`}
-          hint="your estimate from IG insights / bio-tag audit"
-        >
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={relevance}
-            onChange={(e) => setRelevance(parseInt(e.target.value))}
-            className="w-full accent-current"
-            style={{ accentColor: SAGE }}
-          />
-        </Field>
-        <p className="text-[11px] leading-relaxed mt-2" style={{ color: "#9A9284" }}>
-          Demographics (age / gender / geo) aren't computable from post stats — pull those
-          straight from the creator's IG Insights or media-kit and weigh them alongside this
-          score.
-        </p>
+        <div className="mt-6 pt-5" style={{ borderTop: `1px solid ${LINE}` }}>
+          <div className="text-[12px] font-semibold tracking-wide mb-1" style={{ color: SAGE_DK }}>
+            STAGE 1 · PUBLIC DATA ONLY
+          </div>
+          <Field
+            label="Quick niche check"
+            hint="optional — eyeball from their grid/captions"
+          >
+            <textarea
+              className={inputCls + " h-14 resize-none text-[12px]"}
+              style={{ border: `1px solid ${LINE}` }}
+              placeholder="e.g. mostly skincare + a few travel posts, no obvious brand tags outside beauty"
+              value={nicheNotes}
+              onChange={(e) => setNicheNotes(e.target.value)}
+            />
+          </Field>
+          <p className="text-[11px] leading-relaxed" style={{ color: "#9A9284" }}>
+            Enough to filter out obviously off-niche creators before reaching out. Nothing
+            below this line is needed to score a creator at this stage.
+          </p>
+
+          <div
+            className="mt-5 rounded-lg p-3 flex items-center justify-between cursor-pointer select-none"
+            style={{ background: hasMediaKit ? "#EEF1E7" : "#F2EFE7" }}
+            onClick={() => setHasMediaKit(!hasMediaKit)}
+          >
+            <div>
+              <div className="text-[12px] font-semibold tracking-wide" style={{ color: SAGE_DK }}>
+                STAGE 2 · ONCE THEY'VE SENT A MEDIA KIT
+              </div>
+              <div className="text-[11px]" style={{ color: "#9A9284" }}>
+                Only relevant for creators who already cleared Stage 1 and are in active outreach
+              </div>
+            </div>
+            <span
+              className="w-9 h-5 rounded-full relative shrink-0"
+              style={{ background: hasMediaKit ? SAGE : "#D8D2C4" }}
+            >
+              <span
+                className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all"
+                style={{ left: hasMediaKit ? 18 : 2 }}
+              />
+            </span>
+          </div>
+
+          {hasMediaKit && (
+            <div className="mt-4">
+              <Field
+                label={`Audience relevance (skincare/beauty) — ${relevance}%`}
+                hint="from their media kit / shared IG Insights"
+              >
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={relevance}
+                  onChange={(e) => setRelevance(parseInt(e.target.value))}
+                  className="w-full accent-current"
+                  style={{ accentColor: SAGE }}
+                />
+              </Field>
+              <p className="text-[11px] leading-relaxed" style={{ color: "#9A9284" }}>
+                Full age/gender/geo breakdowns live in their media kit itself — this slider is
+                just your one-number summary of audience fit for the scorecard below.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Results */}
@@ -289,13 +340,29 @@ function CreatorVetting() {
                 }
               />
             )}
-            <MetricRow
-              label="Audience relevance (input)"
-              value={`${relevance}%`}
-              sub="skincare/beauty-relevant share of audience"
-              verdict={relevance >= 60 ? "good" : relevance >= 35 ? "mid" : "bad"}
-              verdictLabel={relevance >= 60 ? "on-niche" : relevance >= 35 ? "mixed" : "off-niche"}
-            />
+            {hasMediaKit ? (
+              <MetricRow
+                label="Audience relevance (input)"
+                value={`${relevance}%`}
+                sub="skincare/beauty-relevant share of audience, from media kit"
+                verdict={relevance >= 60 ? "good" : relevance >= 35 ? "mid" : "bad"}
+                verdictLabel={relevance >= 60 ? "on-niche" : relevance >= 35 ? "mixed" : "off-niche"}
+              />
+            ) : (
+              nicheNotes.trim() && (
+                <div className="rounded-lg p-4" style={{ background: "#fff", border: `1px solid ${LINE}` }}>
+                  <div className="text-[12px] font-medium tracking-wide" style={{ color: "#9A9284" }}>
+                    NICHE CHECK (STAGE 1)
+                  </div>
+                  <div className="text-[13px] mt-1" style={{ color: INK }}>
+                    {nicheNotes}
+                  </div>
+                  <div className="text-[11px] mt-1" style={{ color: "#9A9284" }}>
+                    Not scored — a real relevance % needs their media kit (Stage 2).
+                  </div>
+                </div>
+              )
+            )}
             <p className="text-[11px] pt-2 leading-relaxed" style={{ color: "#9A9284" }}>
               Benchmarks above are reasonable starting points, not industry gospel — recalibrate
               the green/amber/red cutoffs against your own past-campaign data as it accumulates.
